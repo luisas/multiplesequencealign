@@ -6,6 +6,7 @@
 // Include the subworkflows
 //
 include { COMPUTE_TREES                     } from '../../subworkflows/local/compute_trees.nf'
+include {TCOFFEELIB_ALIGN                   } from '../../subworkflows/local/aligners/tcoffeelib_align.nf'
 
 // Include the nf-core modules
 include { CLUSTALO_ALIGN                    } from '../../modules/nf-core/clustalo/align/main'
@@ -90,6 +91,7 @@ workflow ALIGN {
             mtmalign:   it[0]["aligner"] == "MTMALIGN"
             regressive: it[0]["aligner"] == "REGRESSIVE"
             tcoffee:    it[0]["aligner"] == "TCOFFEE"
+            tcoffeelib: it[0]["aligner"] == "TCOFFEELIB"
             tcoffee3d:  it[0]["aligner"] == "3DCOFFEE"
             upp:        it[0]["aligner"] == "UPP"
         }
@@ -240,6 +242,7 @@ workflow ALIGN {
         ch_fasta_trees_tcoffee.fasta,
         ch_fasta_trees_tcoffee.tree,
         [ [:], [], [] ],
+        [ [:], [] ],
         compress
     )
     ch_msa = ch_msa.mix(TCOFFEE_ALIGN.out.alignment)
@@ -258,6 +261,7 @@ workflow ALIGN {
         ch_fasta_trees_regressive.fasta,
         ch_fasta_trees_regressive.tree,
         [ [:], [], [] ],
+        [ [:], [] ],
         compress
     )
     ch_msa = ch_msa.mix(REGRESSIVE_ALIGN.out.alignment)
@@ -299,10 +303,33 @@ workflow ALIGN {
             ch_fasta_trees_3dcoffee.fasta,
             ch_fasta_trees_3dcoffee.tree,
             ch_fasta_trees_3dcoffee.dependencies,
+            [ [:], [] ],
             compress
         )
         ch_msa = ch_msa.mix(TCOFFEE3D_ALIGN.out.alignment)
         ch_versions = ch_versions.mix(TCOFFEE3D_ALIGN.out.versions.first())
+
+        // -----------------  TCOFFEELIB  ------------------
+        ch_fasta_trees.tcoffeelib
+            .map{ meta, fasta, tree -> [ meta["id"], meta, fasta, tree ] }
+            .combine(ch_dependencies.map{ meta, template, dependencies -> [ meta["id"], template, dependencies ] }, by: 0)
+            .multiMap{
+                merging_id, meta, fastafile, treefile, templatefile, depencencyfiles ->
+                fasta:      [ meta, fastafile ]
+                tree:       [ meta, treefile  ]
+                dependencies: [ meta, templatefile, depencencyfiles ]
+            }
+            .set { ch_fasta_trees_tcoffeelib }
+
+        TCOFFEELIB_ALIGN (
+            ch_fasta_trees_tcoffeelib.fasta,
+            ch_fasta_trees_tcoffeelib.tree,
+            ch_fasta_trees_tcoffeelib.dependencies,
+            compress
+        )
+        ch_msa = ch_msa.mix(TCOFFEELIB_ALIGN.out.alignment)
+        ch_versions = ch_versions.mix(TCOFFEELIB_ALIGN.out.versions.first())
+
 
         // 3. STRUCTURE BASED
 

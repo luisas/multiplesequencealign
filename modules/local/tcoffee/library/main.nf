@@ -1,4 +1,4 @@
-process TCOFFEE_ALIGN {
+process TCOFFEE_LIBRARY {
     tag "$meta.id"
     label 'process_medium'
 
@@ -11,13 +11,10 @@ process TCOFFEE_ALIGN {
     tuple val(meta) ,  path(fasta)
     tuple val(meta2),  path(tree)
     tuple val(meta3),  path(template), path(accessory_informations)
-    tuple val(meta4),  path(library)
-    val(compress)
+    tuple val(meta4),  path(matrix)
 
     output:
-    tuple val(meta), path("*.aln{.gz,}"), emit: alignment
-    // in the args there might be the request to generate a lib file, so the following is an optional output
-    tuple val(meta), path("*.*lib")     , emit: lib, optional : true
+    tuple val(meta), path("*.*lib")     , emit: lib
     path "versions.yml"                 , emit: versions
 
     when:
@@ -27,28 +24,16 @@ process TCOFFEE_ALIGN {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def tree_args = tree ? "-usetree $tree" : ""
-    def library_args = library ? "-lib $library" : ""
     def template_args = template ? "-template_file $template" : ""
-    def outfile = compress ? "stdout" : "${prefix}.aln"
-    def write_output = compress ? " | pigz -cp ${task.cpus} > ${prefix}.aln.gz" : ""
     """
     export TEMP='./'
-    t_coffee -seq ${fasta} \
+    t_coffee -in ${fasta} \
+        -lib_only \
         $tree_args \
         $template_args \
-        $library_args \
         $args \
         -thread ${task.cpus} \
-        -outfile $outfile \
-        $write_output
-
-    # If stdout file exist and compress is true, then compress the file
-    # This is a patch for the current behaviour of the regressive algorithm
-    # that does not support the stdout redirection
-    if [ -f stdout ] && [ "$compress" = true ]; then
-        pigz -cp ${task.cpus} < stdout > ${prefix}.aln.gz
-        rm stdout
-    fi
+        -out_lib ${prefix}.lib
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -62,7 +47,7 @@ process TCOFFEE_ALIGN {
     """
     # Otherwise, tcoffee will crash when calling its version
     export TEMP='./'
-    touch ${prefix}.aln${compress ? '.gz':''}
+    touch ${prefix}.lib
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

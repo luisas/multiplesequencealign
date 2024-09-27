@@ -403,6 +403,9 @@ class Utils {
         // TCOFFEE
         args = fix_args(tool,args,"TCOFFEE", "-output", "fasta_aln")
 
+        // TCOFFEELIB
+        args = fix_args(tool,args,"TCOFFEELIB", "-lib", "proba_pair")
+
         // UPP
         args = fix_args(tool,args,"UPP", "-m", "amino")
 

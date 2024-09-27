@@ -1,0 +1,31 @@
+Changes in module 'nf-core/tcoffee/align'
+--- modules/nf-core/tcoffee/align/main.nf
++++ modules/nf-core/tcoffee/align/main.nf
+@@ -10,7 +10,8 @@
+     input:
+     tuple val(meta) ,  path(fasta)
+     tuple val(meta2),  path(tree)
+-    tuple val(meta3),  path(template), path(accessory_informations)
++    tuple val(meta3),  path(template), path(accessory_informations),
++    tuple val(meta4),  path(library)
+     val(compress)
+ 
+     output:
+@@ -26,6 +27,7 @@
+     def args = task.ext.args ?: ''
+     def prefix = task.ext.prefix ?: "${meta.id}"
+     def tree_args = tree ? "-usetree $tree" : ""
++    def library_args = library ? "-lib $library" : ""
+     def template_args = template ? "-template_file $template" : ""
+     def outfile = compress ? "stdout" : "${prefix}.aln"
+     def write_output = compress ? " | pigz -cp ${task.cpus} > ${prefix}.aln.gz" : ""
+@@ -34,6 +36,7 @@
+     t_coffee -seq ${fasta} \
+         $tree_args \
+         $template_args \
++        $library_args \
+         $args \
+         -thread ${task.cpus} \
+         -outfile $outfile \
+
+************************************************************
