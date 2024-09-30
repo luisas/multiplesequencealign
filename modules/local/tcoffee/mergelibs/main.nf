@@ -1,4 +1,4 @@
-process TCOFFEE_LIBRARY {
+process TCOFFEE_MERGELIBS {
     tag "$meta.id"
     label 'process_medium'
 
@@ -8,13 +8,10 @@ process TCOFFEE_LIBRARY {
         'biocontainers/mulled-v2-a76a981c07359a31ff55b9dc13bd3da5ce1909c1:84c8f17f1259b49e2f7783b95b7a89c6f2cb199e-0' }"
 
     input:
-    tuple val(meta) ,  path(fasta)
-    tuple val(meta2),  path(tree)
-    tuple val(meta3),  path(template), path(accessory_informations)
-    tuple val(meta4),  path(matrix)
+    tuple val(meta) ,  path(libraries)
 
     output:
-    tuple val(meta), path("*.*lib")     , emit: lib
+    tuple val(meta), path("${prefix}.lib")     , emit: lib
     path "versions.yml"                 , emit: versions
 
     when:
@@ -22,14 +19,11 @@ process TCOFFEE_LIBRARY {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def tree_args = tree ? "-usetree $tree" : ""
-    def template_args = template ? "-template_file $template" : ""
+    prefix = task.ext.prefix ?: "${meta.id}"
     """
     export TEMP='./'
-    t_coffee -in ${fasta} \
+    t_coffee -in ${libraries} \
         -lib_only \
-        $tree_args \
         $args \
         -thread ${task.cpus} \
         -out_lib ${prefix}.lib

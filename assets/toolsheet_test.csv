@@ -1,3 +1,4 @@
 tree,args_tree,aligner,args_aligner
 ,,FAMSA,
-,,TCOFFEELIB,-lib proba_pair fs_pair
+FAMSA,,TCOFFEELIB,-lib proba_pair sap_pair
+,,TCOFFEELIB,-lib proba_pair
