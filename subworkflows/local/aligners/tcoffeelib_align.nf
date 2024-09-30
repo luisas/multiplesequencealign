@@ -17,7 +17,7 @@ workflow TCOFFEELIB_ALIGN {
 
     // Extract the part of the command line that specifies the library
 
-
+    //ch_templates.view()
     // --------------------
     // Get the libraries
     // --------------------

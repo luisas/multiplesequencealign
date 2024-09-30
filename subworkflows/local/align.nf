@@ -312,14 +312,13 @@ workflow ALIGN {
         // -----------------  TCOFFEELIB  ------------------
         ch_fasta_trees.tcoffeelib
                       .map{ meta, fasta, tree -> [ meta["id"], meta, fasta, tree ] }
-                      .join(ch_dependencies.map{ meta, template, dependencies -> [ meta["id"], template, dependencies ] }, by: 0, remainder: true)
-                      .map{ it -> it[4] ? it : [it[0], it[1], it[2], it[3], [], [] ] }                      
+                      .combine(ch_dependencies.map{ meta, template, dependencies -> [ meta["id"], template, dependencies ] }, by: 0).view()
                       .multiMap{
-                        merging_id, meta, fastafile, treefile, templatefile, depencencyfiles ->
-                        fasta:      [ meta, fastafile ]
-                        tree:       [ meta, treefile  ]
-                        dependencies: [ meta, templatefile, depencencyfiles ]
-                      }.set { ch_fasta_trees_tcoffeelib }
+                            merging_id, meta, fastafile, treefile, templatefile, depencencyfiles ->
+                                fasta:      [ meta, fastafile ]
+                                tree:       [ meta, treefile  ]
+                                dependencies: [ meta, templatefile, depencencyfiles ]
+                        }.set { ch_fasta_trees_tcoffeelib }
 
         TCOFFEELIB_ALIGN (
             ch_fasta_trees_tcoffeelib.fasta,
@@ -327,8 +326,8 @@ workflow ALIGN {
             ch_fasta_trees_tcoffeelib.dependencies,
             compress
         )
-        // ch_msa = ch_msa.mix(TCOFFEELIB_ALIGN.out.alignment)
-        // ch_versions = ch_versions.mix(TCOFFEELIB_ALIGN.out.versions.first())
+        ch_msa = ch_msa.mix(TCOFFEELIB_ALIGN.out.alignment)
+        ch_versions = ch_versions.mix(TCOFFEELIB_ALIGN.out.versions.first())
 
 
         // 3. STRUCTURE BASED

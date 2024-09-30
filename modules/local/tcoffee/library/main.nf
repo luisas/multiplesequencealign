@@ -25,11 +25,13 @@ process TCOFFEE_LIBRARY {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def tree_args = tree ? "-usetree $tree" : ""
     def template_args = template ? "-template_file $template" : ""
+    def matrix_args = matrix ? "-fs_matrix $matrix" : ""
     """
     export TEMP='./'
     t_coffee -in ${fasta} \
         -lib_only \
         $tree_args \
+        $matrix_args\
         $args \
         -thread ${task.cpus} \
         -out_lib ${prefix}.lib

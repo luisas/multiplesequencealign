@@ -70,6 +70,11 @@
                     "type": "boolean",
                     "fa_icon": "fas fa-fast-forward",
                     "description": "Build consensus alignment with M-COFFEE."
+                },
+                "matrix_3di": {
+                    "type": "string",
+                    "fa_icon": "fas fa-file-signature",
+                    "description": "Which substitution matrix to use for the library construction."
                 }
             }
         },
