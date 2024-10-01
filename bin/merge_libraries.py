@@ -336,15 +336,19 @@ class Library:
                 file.write(suffix_line)
                 file.write('\n')
 
-
-library1 = sys.argv[1]
-library2 = sys.argv[2]
-aggfunc = sys.argv[3]
-outname = sys.argv[4]
-
-library1 = Library.parse(library1)
-library2 = Library.parse(library2)
-
-library1.combine(library2, aggfunc)
+# count how many args
+if len(sys.argv) == 5:
+    library1 = sys.argv[1]
+    library2 = sys.argv[2]
+    aggfunc = sys.argv[3]
+    outname = sys.argv[4]
+    library1 = Library.parse(library1)
+    library2 = Library.parse(library2)
+    library1.combine(library2, aggfunc)
+else: 
+    library1 = sys.argv[1]
+    aggfunc = sys.argv[2]
+    outname = sys.argv[3]
+    library1 = Library.parse(library1)
 
 library1.write(outname)

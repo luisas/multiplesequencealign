@@ -7,7 +7,7 @@ include { TCOFFEE_LIBRARY as FOLDSEEK_LALIGN_LIBRARY  } from '../../../modules/l
 include { STRUCTURE_TO_3DI                            } from '../../../modules/local/structure_to_3di.nf'  
 include { MERGE_MAPPINGS                              } from '../../../modules/local/merge_mappings.nf'
 include { PREP_FS_SEQS                                } from '../../../modules/local/prep_fs_seq.nf'
-
+include { MERGE_LIBRARIES_MANUAL                      } from '../../../modules/local/merge_libraries_manual.nf'
 
 workflow TCOFFEELIB_LIBRARIES {
 
@@ -120,8 +120,9 @@ workflow TCOFFEELIB_LIBRARIES {
     ch_versions = ch_versions.mix(FOLDSEEK_LALIGN_LIBRARY.out.versions)
 
     // MERGE LIBRARIES
-    MERGE_LIBRARIES(ch_libs.groupTuple())
-    merged_libraries = MERGE_LIBRARIES.out.lib
+    MERGE_LIBRARIES_MANUAL(ch_libs.groupTuple(), "sum")
+    // if i have more than one library, merge them
+    merged_libraries = MERGE_LIBRARIES_MANUAL.out.lib
     
     emit:
     ch_libs      = merged_libraries
