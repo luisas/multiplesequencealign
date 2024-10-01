@@ -17,7 +17,6 @@ workflow TCOFFEELIB_ALIGN {
 
     // Extract the part of the command line that specifies the library
 
-    //ch_templates.view()
     // --------------------
     // Get the libraries
     // --------------------
@@ -60,6 +59,8 @@ workflow TCOFFEELIB_ALIGN {
     versions     = ch_versions
 
 }
+
+
 def remove_lib_parameters(meta){
     // from the key in meta, remove the flag
     def args = meta["args_aligner"]

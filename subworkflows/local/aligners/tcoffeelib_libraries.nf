@@ -4,6 +4,11 @@ include { TCOFFEE_LIBRARY as TMALIGN_LIBRARY          } from '../../../modules/l
 include { TCOFFEE_MERGELIBS as MERGE_LIBRARIES        } from '../../../modules/local/tcoffee/mergelibs/main.nf'
 include { TCOFFEE_LIBRARY as FOLDSEEK_LALIGN_LIBRARY  } from '../../../modules/local/tcoffee/library/main.nf'
 
+include { STRUCTURE_TO_3DI                            } from '../../../modules/local/structure_to_3di.nf'  
+include { MERGE_MAPPINGS                              } from '../../../modules/local/merge_mappings.nf'
+include { PREP_FS_SEQS                                } from '../../../modules/local/prep_fs_seq.nf'
+
+
 workflow TCOFFEELIB_LIBRARIES {
 
     take: 
@@ -70,19 +75,49 @@ workflow TCOFFEELIB_LIBRARIES {
     ch_versions = ch_versions.mix(TMALIGN_LIBRARY.out.versions)
 
     // FOLDSEEK
-    matrix_3di = Channel.fromPath("${params.matrix_3di}").map{ it -> [[:], it]}
+    matrix_3di = Channel.fromPath("${params.matrix_3di}").map{ it -> [[:], it]}.collect()
     ch_lib_params.filter{ it[0].contains("FSlalign_pair") }.multiMap{
                             metalib, meta, fastafile, tree, template, dependencies ->
                                 fasta: [ meta, fastafile]
                                 tree:  [ meta, tree ]
                                 dependencies: [ meta, template, dependencies ]
                         }.set{ ch_fastas_forlibs_fslalign }
-    // FOLDSEEK_LALIGN_LIBRARY(ch_fastas_forlibs_fslalign.fasta,
-    //                     ch_fastas_forlibs_fslalign.tree,
-    //                     ch_fastas_forlibs_fslalign.dependencies,    
-    //                     matrix_3di)
-    // ch_libs = ch_libs.mix(FOLDSEEK_LALIGN_LIBRARY.out.lib)
-    // ch_versions = ch_versions.mix(FOLDSEEK_LALIGN_LIBRARY.out.versions)
+    // Convert each structure to 3di
+    STRUCTURE_TO_3DI(ch_fastas_forlibs_fslalign.dependencies.map{ meta, template, structures -> [ meta, structures ]})
+    // Merge all the 3di mappings into one file (id, fasta sequence, 3di sequence)
+    MERGE_MAPPINGS(STRUCTURE_TO_3DI.out.mapping)
+    ch_fastas_forlibs_fslalign.fasta.combine(
+        MERGE_MAPPINGS.out.mapping, by:0
+    ).set{ mappings_3di }
+    // Prepare the sequences for the library
+    PREP_FS_SEQS(mappings_3di)
+
+    // Prepare channels in the right order for the library computation 
+    ch_fastas_forlibs_fslalign.fasta.combine(
+        ch_fastas_forlibs_fslalign.tree, by : 0
+    ).combine(
+        ch_fastas_forlibs_fslalign.dependencies, by : 0
+    ).map{
+        meta, fasta, tree, template, dependencies -> 
+            [ meta, fasta, tree, template ]
+    }.combine(
+        PREP_FS_SEQS.out.fs_dir, by : 0
+    ).set{ ch_for_fslalign_lib }
+
+    ch_for_fslalign_lib.multiMap{
+        meta, fasta, tree, template, fs_dir ->
+            fasta: [ meta, fasta ]
+            tree:  [ meta, tree ]
+            dependencies: [ meta, template, fs_dir ]
+    }.set{ ch_fastas_forlibs_fslalign}
+
+    // // Compute the library
+    FOLDSEEK_LALIGN_LIBRARY(ch_fastas_forlibs_fslalign.fasta,
+                        ch_fastas_forlibs_fslalign.tree,
+                        ch_fastas_forlibs_fslalign.dependencies,    
+                        matrix_3di)
+    ch_libs = ch_libs.mix(FOLDSEEK_LALIGN_LIBRARY.out.lib)
+    ch_versions = ch_versions.mix(FOLDSEEK_LALIGN_LIBRARY.out.versions)
 
     // MERGE LIBRARIES
     MERGE_LIBRARIES(ch_libs.groupTuple())

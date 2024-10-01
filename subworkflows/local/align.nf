@@ -312,7 +312,7 @@ workflow ALIGN {
         // -----------------  TCOFFEELIB  ------------------
         ch_fasta_trees.tcoffeelib
                       .map{ meta, fasta, tree -> [ meta["id"], meta, fasta, tree ] }
-                      .combine(ch_dependencies.map{ meta, template, dependencies -> [ meta["id"], template, dependencies ] }, by: 0).view()
+                      .combine(ch_dependencies.map{ meta, template, dependencies -> [ meta["id"], template, dependencies ] }, by: 0)
                       .multiMap{
                             merging_id, meta, fastafile, treefile, templatefile, depencencyfiles ->
                                 fasta:      [ meta, fastafile ]
