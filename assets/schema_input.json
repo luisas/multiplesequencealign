@@ -26,9 +26,6 @@
             },
             "template": {
                 "type": "string"
-            }, 
-            "size":{
-                "type": "string"
             }
         },
         "required": ["id"],
