@@ -3,11 +3,16 @@ include { TCOFFEE_LIBRARY as SAP_LIBRARY              } from '../../../modules/l
 include { TCOFFEE_LIBRARY as TMALIGN_LIBRARY          } from '../../../modules/local/tcoffee/library/main.nf'
 include { TCOFFEE_MERGELIBS as MERGE_LIBRARIES        } from '../../../modules/local/tcoffee/mergelibs/main.nf'
 include { TCOFFEE_LIBRARY as FOLDSEEK_LALIGN_LIBRARY  } from '../../../modules/local/tcoffee/library/main.nf'
+include { TCOFFEE_LIBRARY as FOLDSEEK_FULL_LIBRARY    } from '../../../modules/local/tcoffee/library/main.nf'
 
-include { STRUCTURE_TO_3DI                            } from '../../../modules/local/structure_to_3di.nf'  
-include { MERGE_MAPPINGS                              } from '../../../modules/local/merge_mappings.nf'
+include { STRUCTURE_TO_3DI as STRUCTURE_TO_3DI_LOCAL  } from '../../../modules/local/structure_to_3di.nf'
+include { STRUCTURE_TO_3DI as STRUCTURE_TO_3DI_FULL   } from '../../../modules/local/structure_to_3di.nf'
+include { MERGE_MAPPINGS as MERGE_MAPPINGS_FULL       } from '../../../modules/local/merge_mappings.nf'
+include { MERGE_MAPPINGS as MERGE_MAPPINGS_LOCAL      } from '../../../modules/local/merge_mappings.nf'
 include { PREP_FS_SEQS                                } from '../../../modules/local/prep_fs_seq.nf'
 include { MERGE_LIBRARIES_MANUAL                      } from '../../../modules/local/merge_libraries_manual.nf'
+include { ENCODE_FASTA                                } from '../../../modules/local/encode_fasta.nf'
+include { CHANGE_LIBRARY_SEQUENCES                    } from '../../../modules/local/change_library_sequences.nf'
 
 workflow TCOFFEELIB_LIBRARIES {
 
@@ -32,7 +37,9 @@ workflow TCOFFEELIB_LIBRARIES {
     // ch_lib_params.view()
     // TODO : make it so that it overlapping libraries are not computed twice
  
+    // -----------------------------------------------------------------
     // SEQUENCE LIBRARY 
+    // -----------------------------------------------------------------
     ch_lib_params.filter{ it[0].contains("proba_pair") }.multiMap{
                             metalib, meta, fastafile, tree, template, dependencies ->
                                 fasta: [ meta, fastafile]
@@ -46,7 +53,9 @@ workflow TCOFFEELIB_LIBRARIES {
     ch_libs = ch_libs.mix(SEQUENCE_LIBRARY.out.lib)
     ch_versions = ch_versions.mix(SEQUENCE_LIBRARY.out.versions)
 
+    //-----------------------------------------------------------------
     // SAP LIBRARY
+    //-----------------------------------------------------------------
     ch_lib_params.filter{ it[0].contains("sap_pair") }.multiMap{
                             metalib, meta, fastafile, tree, template, dependencies ->
                                 fasta: [ meta, fastafile]
@@ -60,7 +69,9 @@ workflow TCOFFEELIB_LIBRARIES {
     ch_libs = ch_libs.mix(SAP_LIBRARY.out.lib)
     ch_versions = ch_versions.mix(SAP_LIBRARY.out.versions)
 
+    //-----------------------------------------------------------------
     // TMALIGN LIBRARY
+    //-----------------------------------------------------------------
     ch_lib_params.filter{ it[0].contains("TMalign_pair") }.multiMap{
                             metalib, meta, fastafile, tree, template, dependencies ->
                                 fasta: [ meta, fastafile]
@@ -74,7 +85,9 @@ workflow TCOFFEELIB_LIBRARIES {
     ch_libs = ch_libs.mix(TMALIGN_LIBRARY.out.lib)
     ch_versions = ch_versions.mix(TMALIGN_LIBRARY.out.versions)
 
-    // FOLDSEEK
+    //-----------------------------------------------------------------
+    // FOLDSEEK LOCAL LALIGN
+    //-----------------------------------------------------------------
     matrix_3di = Channel.fromPath("${params.matrix_3di}").map{ it -> [[:], it]}.collect()
     ch_lib_params.filter{ it[0].contains("FSlalign_pair") }.multiMap{
                             metalib, meta, fastafile, tree, template, dependencies ->
@@ -83,11 +96,11 @@ workflow TCOFFEELIB_LIBRARIES {
                                 dependencies: [ meta, template, dependencies ]
                         }.set{ ch_fastas_forlibs_fslalign }
     // Convert each structure to 3di
-    STRUCTURE_TO_3DI(ch_fastas_forlibs_fslalign.dependencies.map{ meta, template, structures -> [ meta, structures ]})
+    STRUCTURE_TO_3DI_LOCAL(ch_fastas_forlibs_fslalign.dependencies.map{ meta, template, structures -> [ meta, structures ]})
     // Merge all the 3di mappings into one file (id, fasta sequence, 3di sequence)
-    MERGE_MAPPINGS(STRUCTURE_TO_3DI.out.mapping)
+    MERGE_MAPPINGS_LOCAL(STRUCTURE_TO_3DI_LOCAL.out.mapping)
     ch_fastas_forlibs_fslalign.fasta.combine(
-        MERGE_MAPPINGS.out.mapping, by:0
+        MERGE_MAPPINGS_LOCAL.out.mapping, by:0
     ).set{ mappings_3di }
     // Prepare the sequences for the library
     PREP_FS_SEQS(mappings_3di)
@@ -111,7 +124,7 @@ workflow TCOFFEELIB_LIBRARIES {
             dependencies: [ meta, template, fs_dir ]
     }.set{ ch_fastas_forlibs_fslalign}
 
-    // // Compute the library
+    // Compute the library
     FOLDSEEK_LALIGN_LIBRARY(ch_fastas_forlibs_fslalign.fasta,
                         ch_fastas_forlibs_fslalign.tree,
                         ch_fastas_forlibs_fslalign.dependencies,    
@@ -119,9 +132,47 @@ workflow TCOFFEELIB_LIBRARIES {
     ch_libs = ch_libs.mix(FOLDSEEK_LALIGN_LIBRARY.out.lib)
     ch_versions = ch_versions.mix(FOLDSEEK_LALIGN_LIBRARY.out.versions)
 
+
+    //-----------------------------------------------------------------
+    // FOLDSEEK LIBRARY FULL 
+    //-----------------------------------------------------------------
+    ch_lib_params.filter{ it[0].contains("FSfull_pair") }.multiMap{
+                            metalib, meta, fastafile, tree, template, dependencies ->
+                                fasta: [ meta, fastafile]
+                                tree:  [ meta, tree ]
+                                dependencies: [ meta, template, dependencies ]
+                        }.set{ ch_fastas_forlibs_fsfull }
+    
+    // Convert each structure to 3di
+    STRUCTURE_TO_3DI_FULL(ch_fastas_forlibs_fsfull.dependencies.map{ meta, template, structures -> [ meta, structures ]})
+    // Merge all the 3di mappings into one file (id, fasta sequence, 3di sequence)
+    MERGE_MAPPINGS_FULL(STRUCTURE_TO_3DI_FULL.out.mapping)
+    ch_fastas_forlibs_fsfull.fasta.combine(
+        MERGE_MAPPINGS_FULL.out.mapping, by:0
+    ).set{ mappings_3di_full }
+
+    ENCODE_FASTA(mappings_3di_full)
+    ENCODE_FASTA.out.encoded_fasta.multiMap{
+        meta, fasta, mapping, encoded_fasta ->
+            mapping: [ meta, mapping ]
+            encoded_fasta: [ meta, encoded_fasta ]
+    }.set{ ch_fastas_forlibs_fsfull }
+
+    ch_fastas_forlibs_fsfull.encoded_fasta.view()
+    FOLDSEEK_FULL_LIBRARY(
+        ch_fastas_forlibs_fsfull.encoded_fasta,
+        [[:],[]],
+        [[:],[],[]],
+        matrix_3di
+    )
+
+    CHANGE_LIBRARY_SEQUENCES(ch_fastas_forlibs_fsfull.mapping.combine(FOLDSEEK_FULL_LIBRARY.out.lib.view(), by:0))
+    ch_libs = ch_libs.mix(CHANGE_LIBRARY_SEQUENCES.out.library)
+
+    // -----------------------------------------------------------------
     // MERGE LIBRARIES
-    MERGE_LIBRARIES_MANUAL(ch_libs.groupTuple(), "sum")
-    // if i have more than one library, merge them
+    // -----------------------------------------------------------------
+    MERGE_LIBRARIES_MANUAL(ch_libs.groupTuple(), "max")
     merged_libraries = MERGE_LIBRARIES_MANUAL.out.lib
     
     emit:
