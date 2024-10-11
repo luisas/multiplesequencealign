@@ -1,9 +1,3 @@
 id,fasta,reference,dependencies,template
 aadh,/home/luisasantus/Desktop/zenodo_folder/refs/aadh-ref.fa,/home/luisasantus/Desktop/zenodo_folder/refs/aadh.ref,/home/luisasantus/Desktop/zenodo_folder/structures/aadh.tar.gz,
 aat,/home/luisasantus/Desktop/zenodo_folder/refs/aat-ref.fa,/home/luisasantus/Desktop/zenodo_folder/refs/aat.ref,/home/luisasantus/Desktop/zenodo_folder/structures/aat.tar.gz,
-ace,/home/luisasantus/Desktop/zenodo_folder/refs/ace-ref.fa,/home/luisasantus/Desktop/zenodo_folder/refs/ace.ref,/home/luisasantus/Desktop/zenodo_folder/structures/ace.tar.gz,
-Acetyltransf,/home/luisasantus/Desktop/zenodo_folder/refs/Acetyltransf-ref.fa,/home/luisasantus/Desktop/zenodo_folder/refs/Acetyltransf.ref,/home/luisasantus/Desktop/zenodo_folder/structures/Acetyltransf.tar.gz,
-adh,/home/luisasantus/Desktop/zenodo_folder/refs/adh-ref.fa,/home/luisasantus/Desktop/zenodo_folder/refs/adh.ref,/home/luisasantus/Desktop/zenodo_folder/structures/adh.tar.gz,
-aldosered,/home/luisasantus/Desktop/zenodo_folder/refs/aldosered-ref.fa,/home/luisasantus/Desktop/zenodo_folder/refs/aldosered.ref,/home/luisasantus/Desktop/zenodo_folder/structures/aldosered.tar.gz,
-Ald_Xan_dh_2,/home/luisasantus/Desktop/zenodo_folder/refs/Ald_Xan_dh_2-ref.fa,/home/luisasantus/Desktop/zenodo_folder/refs/Ald_Xan_dh_2.ref,/home/luisasantus/Desktop/zenodo_folder/structures/Ald_Xan_dh_2.tar.gz,
-annexin,/home/luisasantus/Desktop/zenodo_folder/refs/annexin-ref.fa,/home/luisasantus/Desktop/zenodo_folder/refs/annexin.ref,/home/luisasantus/Desktop/zenodo_folder/structures/annexin.tar.gz,

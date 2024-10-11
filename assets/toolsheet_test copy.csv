@@ -1,0 +1,6 @@
+tree,args_tree,aligner,args_aligner
+,,TCOFFEELIB,-lib sap_pair
+,,TCOFFEELIB,-lib TMalign_pair
+,,TCOFFEELIB,-lib proba_pair FSfull_pair
+,,TCOFFEELIB,-lib proba_pair
+,,TCOFFEELIB,-lib FSfull_pair
