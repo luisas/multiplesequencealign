@@ -32,6 +32,7 @@ process TCOFFEE_LIBRARY {
         -lib_only \
         $tree_args \
         $matrix_args\
+        $template_args \
         $args \
         -thread ${task.cpus} \
         -out_lib ${prefix}.lib

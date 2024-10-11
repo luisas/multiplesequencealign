@@ -152,21 +152,21 @@ workflow TCOFFEELIB_LIBRARIES {
     ).set{ mappings_3di_full }
 
     ENCODE_FASTA(mappings_3di_full)
-    ENCODE_FASTA.out.encoded_fasta.multiMap{
-        meta, fasta, mapping, encoded_fasta ->
+    ENCODE_FASTA.out.encoded_fasta.combine(ch_fastas_forlibs_fsfull.tree, by:0).multiMap{
+        meta, fasta, mapping, encoded_fasta, tree ->
             mapping: [ meta, mapping ]
+            tree: [ meta, tree ]
             encoded_fasta: [ meta, encoded_fasta ]
-    }.set{ ch_fastas_forlibs_fsfull }
+    }.set{ ch_fastas_forlibs_fsfull_tree }
 
-    ch_fastas_forlibs_fsfull.encoded_fasta.view()
     FOLDSEEK_FULL_LIBRARY(
-        ch_fastas_forlibs_fsfull.encoded_fasta,
-        [[:],[]],
+        ch_fastas_forlibs_fsfull_tree.encoded_fasta,
+        ch_fastas_forlibs_fsfull_tree.tree,
         [[:],[],[]],
         matrix_3di
     )
 
-    CHANGE_LIBRARY_SEQUENCES(ch_fastas_forlibs_fsfull.mapping.combine(FOLDSEEK_FULL_LIBRARY.out.lib.view(), by:0))
+    CHANGE_LIBRARY_SEQUENCES(ch_fastas_forlibs_fsfull_tree.mapping.combine(FOLDSEEK_FULL_LIBRARY.out.lib.view(), by:0))
     ch_libs = ch_libs.mix(CHANGE_LIBRARY_SEQUENCES.out.library)
 
     // -----------------------------------------------------------------
